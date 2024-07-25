@@ -17,7 +17,6 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
-app.use("/public", express_1.default.static("public"));
 (0, mongoDB_1.connectToDatabase)();
 app.use("/api", route_1.default);
 app.use((err, req, res, next) => {

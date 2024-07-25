@@ -4,11 +4,13 @@ import jwt from "jsonwebtoken";
 import AppError from "../utils/appError";
 import catchAsync from "../utils/catchAsync";
 import { User } from "../model/userModel";
+import { Task } from "../model/taskModel";
 
 
 export const signUp = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { firstname, lastname, email, password } = req.body;
+    console.log(firstname)
 
     if (!firstname || !lastname || !email || !password) {
       return next(new AppError("Please provide all details", 400));
@@ -39,6 +41,7 @@ export const signUp = catchAsync(
 export const signIn = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
+    console.log(email)
 
     if (!email || !password) {
       return next(new AppError("Please provide email and password", 400));
@@ -119,3 +122,35 @@ export const googleAuth = catchAsync(
     }
   }
 );
+
+
+
+export const addTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { description, taskNumber } = req.body;
+
+  if (!description || !taskNumber) {
+    return next(new AppError('Please provide both description and task number.', 400));
+  }
+
+  const existingTask = await Task.findOne({ taskNumber });
+  if (existingTask) {
+    return next(new AppError('This task number already exists. Please use a different task number.', 409));
+  }
+
+  const newTask = new Task({ description, taskNumber });
+  await newTask.save();
+
+  res.status(201).json({
+    status: 'success',
+    message: 'Task created successfully',
+  });
+});
+
+export const getTasks = catchAsync(async(req:Request,res:Response,next:NextFunction)=>{
+  const tasks = await Task.find({})
+  res.status(200).json({
+    status: 'success',
+    data: tasks 
+  });
+  
+})
