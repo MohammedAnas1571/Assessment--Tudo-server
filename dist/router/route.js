@@ -10,4 +10,8 @@ router.post("/sign-in", userController_1.signIn);
 router.post("/sign-up", userController_1.signUp);
 router.post("/goolgeAuth", userController_1.googleAuth);
 router.post("/tasks", userController_1.addTask);
+router.get("/tasks", userController_1.getTasks);
+router.get("/task/:taskId", userController_1.getTask);
+router.put("/task/:taskId", userController_1.editTask);
+router.delete("/task/:taskId", userController_1.deleteTask);
 exports.default = router;

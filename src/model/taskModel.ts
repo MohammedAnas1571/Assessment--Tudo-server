@@ -2,10 +2,9 @@ import { InferSchemaType, Schema, model } from "mongoose";
 
 const taskSchema = new Schema(
   {
-    taskNumber:{
+    title:{
         type:String,
         required: true,
-        unique:true
     },
     description: {
       type: String,

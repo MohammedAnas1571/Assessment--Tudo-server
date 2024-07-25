@@ -126,18 +126,20 @@ export const googleAuth = catchAsync(
 
 
 export const addTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const { description, taskNumber } = req.body;
+  const { description, title } = req.body;
 
-  if (!description || !taskNumber) {
-    return next(new AppError('Please provide both description and task number.', 400));
+  if (!description || !title) {
+    return next(new AppError('Please provide both description and title.', 400));
   }
 
-  const existingTask = await Task.findOne({ taskNumber });
+  const normalizedTitle = title.toLowerCase();
+  const existingTask = await Task.findOne({ title: normalizedTitle });
+
   if (existingTask) {
-    return next(new AppError('This task number already exists. Please use a different task number.', 409));
+    return next(new AppError("This task already exists", 409));
   }
 
-  const newTask = new Task({ description, taskNumber });
+  const newTask = new Task({ description, title: normalizedTitle });
   await newTask.save();
 
   res.status(201).json({
@@ -146,11 +148,91 @@ export const addTask = catchAsync(async (req: Request, res: Response, next: Next
   });
 });
 
-export const getTasks = catchAsync(async(req:Request,res:Response,next:NextFunction)=>{
+export const getTasks = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const tasks = await Task.find({})
   res.status(200).json({
     status: 'success',
-    data: tasks 
+    data: tasks
   });
-  
+
 })
+
+
+export const getTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { taskId } = req.params;
+
+  if (!taskId) {
+    return next(new AppError('Task ID is required', 400));
+  }
+
+  const task = await Task.findById(taskId);
+
+  if (!task) {
+    return next(new AppError('Task not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: task
+  });
+});
+
+
+
+export const editTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { taskId } = req.params;
+  const { title, description, status } = req.body;
+
+  if (!taskId) {
+    return next(new AppError('Task ID is required', 400));
+  }
+
+  if (!title || !description) {
+    return next(new AppError('Title and description are required for update', 400));
+  }
+
+  const validStatuses = ['Todo', 'InProgress', 'Done'];
+  if (status && !validStatuses.includes(status)) {
+    return next(new AppError('Invalid status value', 400));
+  }
+
+  const normalizedTitle = title.toLowerCase();
+  const existingTask = await Task.findOne({ title: normalizedTitle });
+
+  if (existingTask && existingTask._id.toString() !== taskId) {
+    return next(new AppError("This task already exists", 409));
+  }
+
+  const task = await Task.findByIdAndUpdate(
+    taskId,
+    { $set: { title: normalizedTitle, description, status } },
+    { new: true, runValidators: true }
+  );
+
+  if (!task) {
+    return next(new AppError('Task not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Task updated successfully',
+   
+  });
+});
+export const deleteTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { taskId } = req.params;
+
+  if (!taskId) {
+    return next(new AppError('Task ID is required', 400));
+  }
+  const task = await Task.findByIdAndDelete(taskId);
+
+  if (!task) {
+    return next(new AppError('Task not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Task deleted successfully'
+  });
+});

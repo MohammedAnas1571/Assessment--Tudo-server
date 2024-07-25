@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addTask = exports.googleAuth = exports.signIn = exports.signUp = void 0;
+exports.deleteTask = exports.editTask = exports.getTask = exports.getTasks = exports.addTask = exports.googleAuth = exports.signIn = exports.signUp = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const appError_1 = __importDefault(require("../utils/appError"));
@@ -111,14 +111,81 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
     }
 }));
 exports.addTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { description } = req.body;
-    if (!description) {
-        return next(new appError_1.default('Please provide description', 400));
+    const { description, title } = req.body;
+    if (!description || !title) {
+        return next(new appError_1.default('Please provide both description and title.', 400));
     }
-    const task = new taskModel_1.Task({ description });
-    yield task.save();
+    const normalizedTitle = title.toLowerCase();
+    const existingTask = yield taskModel_1.Task.findOne({ title: normalizedTitle });
+    if (existingTask) {
+        return next(new appError_1.default("This task already exists", 409));
+    }
+    const newTask = new taskModel_1.Task({ description, title: normalizedTitle });
+    yield newTask.save();
     res.status(201).json({
         status: 'success',
-        message: "Task created successfully"
+        message: 'Task created successfully',
+    });
+}));
+exports.getTasks = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const tasks = yield taskModel_1.Task.find({});
+    res.status(200).json({
+        status: 'success',
+        data: tasks
+    });
+}));
+exports.getTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskId } = req.params;
+    if (!taskId) {
+        return next(new appError_1.default('Task ID is required', 400));
+    }
+    const task = yield taskModel_1.Task.findById(taskId);
+    if (!task) {
+        return next(new appError_1.default('Task not found', 404));
+    }
+    res.status(200).json({
+        status: 'success',
+        data: task
+    });
+}));
+exports.editTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskId } = req.params;
+    const { title, description, status } = req.body;
+    if (!taskId) {
+        return next(new appError_1.default('Task ID is required', 400));
+    }
+    if (!title || !description) {
+        return next(new appError_1.default('Title and description are required for update', 400));
+    }
+    const validStatuses = ['Todo', 'InProgress', 'Done'];
+    if (status && !validStatuses.includes(status)) {
+        return next(new appError_1.default('Invalid status value', 400));
+    }
+    const normalizedTitle = title.toLowerCase();
+    const existingTask = yield taskModel_1.Task.findOne({ title: normalizedTitle });
+    if (existingTask && existingTask._id.toString() !== taskId) {
+        return next(new appError_1.default("This task already exists", 409));
+    }
+    const task = yield taskModel_1.Task.findByIdAndUpdate(taskId, { $set: { title: normalizedTitle, description, status } }, { new: true, runValidators: true });
+    if (!task) {
+        return next(new appError_1.default('Task not found', 404));
+    }
+    res.status(200).json({
+        status: 'success',
+        message: 'Task updated successfully',
+    });
+}));
+exports.deleteTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskId } = req.params;
+    if (!taskId) {
+        return next(new appError_1.default('Task ID is required', 400));
+    }
+    const task = yield taskModel_1.Task.findByIdAndDelete(taskId);
+    if (!task) {
+        return next(new appError_1.default('Task not found', 404));
+    }
+    res.status(200).json({
+        status: 'success',
+        message: 'Task deleted successfully'
     });
 }));
