@@ -19,7 +19,7 @@ export const verifyToken = catchAsync(async (req: Request, res: Response, next: 
     
   console.log(req.cookies)
   const token = req.cookies?.access_token;
-  console.log(token)
+ 
 
   if (!token) {
     return next(new AppError("Access denied. Please sign in to continue.", 401));

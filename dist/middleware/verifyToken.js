@@ -20,7 +20,6 @@ exports.verifyToken = (0, catchAsync_1.default)((req, res, next) => __awaiter(vo
     var _a;
     console.log(req.cookies);
     const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.access_token;
-    console.log(token);
     if (!token) {
         return next(new appError_1.default("Access denied. Please sign in to continue.", 401));
     }
