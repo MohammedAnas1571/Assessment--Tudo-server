@@ -11,8 +11,9 @@ const route_1 = __importDefault(require("./router/route"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+console.log(process.env.ORIGIN);
 app.use((0, cors_1.default)({
-    origin: process.env.ORIGIN,
+    origin: process.env.ORIGIN || "*",
     credentials: true,
 }));
 app.use(express_1.default.json());
