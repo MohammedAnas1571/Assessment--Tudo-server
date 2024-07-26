@@ -41,7 +41,7 @@ export const signUp = catchAsync(
 export const signIn = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
-    console.log(email)
+  
 
     if (!email || !password) {
       return next(new AppError("Please provide email and password", 400));
@@ -148,14 +148,65 @@ export const addTask = catchAsync(async (req: Request, res: Response, next: Next
   });
 });
 
+
 export const getTasks = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const tasks = await Task.find({})
+  const { search, sort } = req.query;
+
+  if (!search && !sort) {
+    const tasks = await Task.find({});
+    return res.status(200).json({
+      status: 'success',
+      data: tasks,
+    });
+  }
+
+  const query: { [key: string]: any } = search ? { title: { $regex: search, $options: 'i' } } : {};
+
+  
+  let sortOption = { createdAt: -1 }.toString()
+  if (sort === 'week') {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    query['createdAt'] = { $gte: oneWeekAgo };
+  } else if (sort === 'two_weeks') {
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    query['createdAt'] = { $gte: twoWeeksAgo };
+  }
+
+  const tasks = await Task.find(query).sort(sortOption);
+
   res.status(200).json({
     status: 'success',
-    data: tasks
+    data: tasks,
   });
+});
 
-})
+
+
+export const updateTaskStatus = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { taskId } = req.params;
+  const { status } = req.body;
+
+  if (!taskId) {
+    return next(new AppError('Task ID is required', 400));
+  }
+
+  if (!['Todo', 'InProgress', 'Done'].includes(status)) {
+    return next(new AppError('Invalid status', 400));
+  }
+
+  const task = await Task.findByIdAndUpdate(taskId, { status }, { new: true, runValidators: true });
+
+  if (!task) {
+    return next(new AppError('Task not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: task,
+  });
+});
 
 
 export const getTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -235,4 +286,12 @@ export const deleteTask = catchAsync(async (req: Request, res: Response, next: N
     status: 'success',
     message: 'Task deleted successfully'
   });
+});
+
+
+export const signOut = catchAsync(async (req, res, next) => {
+  res.clearCookie("access_token", {
+    httpOnly: true,
+  });
+  res.status(200).json({ message: "Logout successfully" });
 });
