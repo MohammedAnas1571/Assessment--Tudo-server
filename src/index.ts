@@ -9,9 +9,9 @@ import cookieParser from "cookie-parser"
 dotenv.config();
 
 const app: Express = express();
-
+console.log(process.env.ORIGIN)
 app.use(cors({
-  origin: process.env.ORIGIN,
+  origin: process.env.ORIGIN || "*",
   credentials: true,
 }));
 app.use(express.json());
