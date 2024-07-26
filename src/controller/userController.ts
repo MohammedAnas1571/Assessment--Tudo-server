@@ -58,12 +58,12 @@ export const signIn = catchAsync(
     const token = jwt.sign({ id: user._id }, process.env.TOKEN as string, {
       expiresIn: "5d",
     });
-
+   console.log(token)
     res
       .cookie("access_token", token, {
         httpOnly: true,
         maxAge: 5 * 24 * 60 * 60 * 1000, 
-        secure: process.env.NODE_ENV === "production", 
+        
        
       })
       .status(200)
