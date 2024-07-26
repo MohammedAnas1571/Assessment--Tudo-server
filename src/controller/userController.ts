@@ -37,17 +37,15 @@ export const signUp = catchAsync(
     });
   }
 );
-
 export const signIn = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
-
 
     if (!email || !password) {
       return next(new AppError("Please provide email and password", 400));
     }
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email });
     if (!user) {
       return next(new AppError("User not found. Please register", 404));
     }
@@ -61,19 +59,17 @@ export const signIn = catchAsync(
       expiresIn: "5d",
     });
 
-    
-
     res
       .cookie("access_token", token, {
         httpOnly: true,
-        maxAge: 5 * 24 * 60 * 60 * 1000,
-        secure: process.env.NODE_ENV === "production",
+        maxAge: 5 * 24 * 60 * 60 * 1000, 
+        secure: process.env.NODE_ENV === "production", 
+       
       })
       .status(200)
-      .json({ status: 'success', message: "Login successfully",data:user.profilePhoto });
+      .json({ status: 'success', message: "Login successfully", data: user.profilePhoto });
   }
 );
-
 
 export const googleAuth = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -98,7 +94,7 @@ export const googleAuth = catchAsync(
         .cookie("access_token", token, {
           httpOnly: true,
           maxAge: 5 * 24 * 60 * 60 * 1000,
-          secure: process.env.NODE_ENV === "production",
+          
         })
         .status(200)
         .json({ status: 'success', message: "Login successfully" });
@@ -123,7 +119,7 @@ export const googleAuth = catchAsync(
         .cookie("access_token", token, {
           httpOnly: true,
           maxAge: 5 * 24 * 60 * 60 * 1000,
-          secure: process.env.NODE_ENV === "production",
+          
         })
         .status(200)
         .json({ status: 'success', message: "Account created and login successfully",data:user.profilePhoto});
