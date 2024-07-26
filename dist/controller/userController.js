@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteTask = exports.editTask = exports.getTask = exports.getTasks = exports.addTask = exports.googleAuth = exports.signIn = exports.signUp = void 0;
+exports.signOut = exports.deleteTask = exports.editTask = exports.getTask = exports.updateTaskStatus = exports.getTasks = exports.addTask = exports.googleAuth = exports.signIn = exports.signUp = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const appError_1 = __importDefault(require("../utils/appError"));
@@ -44,7 +44,6 @@ exports.signUp = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
 }));
 exports.signIn = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
-    console.log(email);
     if (!email || !password) {
         return next(new appError_1.default("Please provide email and password", 400));
     }
@@ -66,15 +65,17 @@ exports.signIn = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
         secure: process.env.NODE_ENV === "production",
     })
         .status(200)
-        .json({ status: 'success', message: "Login successfully" });
+        .json({ status: 'success', message: "Login successfully", data: user.profilePhoto });
 }));
 exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { firstname, lastname, email } = req.body;
+    const { firstname, lastname, email, profilePhoto } = req.body;
     if (!firstname || !lastname || !email) {
         return next(new appError_1.default("Please provide all required fields", 400));
     }
     let user = yield userModel_1.User.findOne({ email });
     if (user) {
+        user.profilePhoto = profilePhoto || user.profilePhoto;
+        yield user.save();
         const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.TOKEN, {
             expiresIn: "5d",
         });
@@ -95,7 +96,8 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
             firstname,
             lastname,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            profilePhoto: profilePhoto || 'path/to/default-avatar.png', // Default avatar
         });
         const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.TOKEN, {
             expiresIn: "5d",
@@ -107,7 +109,7 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
             secure: process.env.NODE_ENV === "production",
         })
             .status(200)
-            .json({ status: 'success', message: "Account created and login successfully" });
+            .json({ status: 'success', message: "Account created and login successfully", data: user.profilePhoto });
     }
 }));
 exports.addTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -128,10 +130,48 @@ exports.addTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0
     });
 }));
 exports.getTasks = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const tasks = yield taskModel_1.Task.find({});
+    const { search, sort } = req.query;
+    if (!search && !sort) {
+        const tasks = yield taskModel_1.Task.find({});
+        return res.status(200).json({
+            status: 'success',
+            data: tasks,
+        });
+    }
+    const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+    let sortOption = { createdAt: -1 }.toString();
+    if (sort === 'week') {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        query['createdAt'] = { $gte: oneWeekAgo };
+    }
+    else if (sort === 'two_weeks') {
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        query['createdAt'] = { $gte: twoWeeksAgo };
+    }
+    const tasks = yield taskModel_1.Task.find(query).sort(sortOption);
     res.status(200).json({
         status: 'success',
-        data: tasks
+        data: tasks,
+    });
+}));
+exports.updateTaskStatus = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskId } = req.params;
+    const { status } = req.body;
+    if (!taskId) {
+        return next(new appError_1.default('Task ID is required', 400));
+    }
+    if (!['Todo', 'InProgress', 'Done'].includes(status)) {
+        return next(new appError_1.default('Invalid status', 400));
+    }
+    const task = yield taskModel_1.Task.findByIdAndUpdate(taskId, { status }, { new: true, runValidators: true });
+    if (!task) {
+        return next(new appError_1.default('Task not found', 404));
+    }
+    res.status(200).json({
+        status: 'success',
+        data: task,
     });
 }));
 exports.getTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -188,4 +228,10 @@ exports.deleteTask = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
         status: 'success',
         message: 'Task deleted successfully'
     });
+}));
+exports.signOut = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    res.clearCookie("access_token", {
+        httpOnly: true,
+    });
+    res.status(200).json({ message: "Logout successfully" });
 }));
