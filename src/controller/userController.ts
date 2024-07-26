@@ -41,7 +41,7 @@ export const signUp = catchAsync(
 export const signIn = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
-  
+
 
     if (!email || !password) {
       return next(new AppError("Please provide email and password", 400));
@@ -61,6 +61,8 @@ export const signIn = catchAsync(
       expiresIn: "5d",
     });
 
+    
+
     res
       .cookie("access_token", token, {
         httpOnly: true,
@@ -68,13 +70,14 @@ export const signIn = catchAsync(
         secure: process.env.NODE_ENV === "production",
       })
       .status(200)
-      .json({ status: 'success', message: "Login successfully" });
+      .json({ status: 'success', message: "Login successfully",data:user.profilePhoto });
   }
 );
 
+
 export const googleAuth = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { firstname, lastname, email } = req.body;
+    const { firstname, lastname, email, profilePhoto } = req.body;
 
     if (!firstname || !lastname || !email) {
       return next(new AppError("Please provide all required fields", 400));
@@ -83,6 +86,10 @@ export const googleAuth = catchAsync(
     let user = await User.findOne({ email });
 
     if (user) {
+
+      user.profilePhoto = profilePhoto || user.profilePhoto;
+      await user.save();
+
       const token = jwt.sign({ id: user._id }, process.env.TOKEN as string, {
         expiresIn: "5d",
       });
@@ -96,7 +103,7 @@ export const googleAuth = catchAsync(
         .status(200)
         .json({ status: 'success', message: "Login successfully" });
     } else {
-      const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8)
+      const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -104,7 +111,8 @@ export const googleAuth = catchAsync(
         firstname,
         lastname,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        profilePhoto: profilePhoto || 'path/to/default-avatar.png', // Default avatar
       });
 
       const token = jwt.sign({ id: user._id }, process.env.TOKEN as string, {
@@ -118,7 +126,7 @@ export const googleAuth = catchAsync(
           secure: process.env.NODE_ENV === "production",
         })
         .status(200)
-        .json({ status: 'success', message: "Account created and login successfully" });
+        .json({ status: 'success', message: "Account created and login successfully",data:user.profilePhoto});
     }
   }
 );
@@ -160,9 +168,9 @@ export const getTasks = catchAsync(async (req: Request, res: Response, next: Nex
     });
   }
 
-  const query: { [key: string]: any } = search ? { title: { $regex: search, $options: 'i' } } : {};
+  const query: { [key: string]:any } = search ? { title: { $regex: search, $options: 'i' } } : {};
 
-  
+
   let sortOption = { createdAt: -1 }.toString()
   if (sort === 'week') {
     const oneWeekAgo = new Date();
@@ -267,7 +275,7 @@ export const editTask = catchAsync(async (req: Request, res: Response, next: Nex
   res.status(200).json({
     status: 'success',
     message: 'Task updated successfully',
-   
+
   });
 });
 export const deleteTask = catchAsync(async (req: Request, res: Response, next: NextFunction) => {

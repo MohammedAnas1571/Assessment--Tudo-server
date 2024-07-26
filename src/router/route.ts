@@ -6,7 +6,7 @@ const router: Router = express.Router();
 
 router.post("/sign-in",signIn);
 router.post("/sign-up",signUp)
-router.post("/goolgeAuth",googleAuth)
+router.post("/googleAuth",googleAuth)
 router.get("/tasks",verifyToken,getTasks)
 router.put('/tasks/:taskId',verifyToken,updateTaskStatus)
 router.post("/tasks",verifyToken,addTask)
