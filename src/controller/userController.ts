@@ -100,7 +100,7 @@ export const googleAuth = catchAsync(
 
         })
         .status(200)
-        .json({ status: 'success', message: "Login successfully" });
+        .json({ status: 'success', message: "Login successfully",data:user.profilePhoto });
     } else {
       const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
       const salt = await bcrypt.genSalt(10);
@@ -111,7 +111,7 @@ export const googleAuth = catchAsync(
         lastname,
         email,
         password: hashedPassword,
-        profilePhoto: profilePhoto || 'path/to/default-avatar.png', // Default avatar
+        profilePhoto: profilePhoto , 
       });
 
       const token = jwt.sign({ id: user._id }, process.env.TOKEN as string, {

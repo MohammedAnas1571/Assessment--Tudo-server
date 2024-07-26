@@ -87,7 +87,7 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
             sameSite: 'none'
         })
             .status(200)
-            .json({ status: 'success', message: "Login successfully" });
+            .json({ status: 'success', message: "Login successfully", data: user.profilePhoto });
     }
     else {
         const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
@@ -98,7 +98,7 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
             lastname,
             email,
             password: hashedPassword,
-            profilePhoto: profilePhoto || 'path/to/default-avatar.png', // Default avatar
+            profilePhoto: profilePhoto,
         });
         const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.TOKEN, {
             expiresIn: "5d",
