@@ -58,11 +58,11 @@ exports.signIn = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
     const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.TOKEN, {
         expiresIn: "5d",
     });
+    console.log(token);
     res
         .cookie("access_token", token, {
         httpOnly: true,
         maxAge: 5 * 24 * 60 * 60 * 1000,
-        secure: process.env.NODE_ENV === "production",
     })
         .status(200)
         .json({ status: 'success', message: "Login successfully", data: user.profilePhoto });
@@ -83,7 +83,6 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
             .cookie("access_token", token, {
             httpOnly: true,
             maxAge: 5 * 24 * 60 * 60 * 1000,
-            secure: process.env.NODE_ENV === "production",
         })
             .status(200)
             .json({ status: 'success', message: "Login successfully" });
@@ -106,7 +105,6 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
             .cookie("access_token", token, {
             httpOnly: true,
             maxAge: 5 * 24 * 60 * 60 * 1000,
-            secure: process.env.NODE_ENV === "production",
         })
             .status(200)
             .json({ status: 'success', message: "Account created and login successfully", data: user.profilePhoto });
