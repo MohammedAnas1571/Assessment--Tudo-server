@@ -24,7 +24,7 @@ export const signUp = catchAsync(
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await User.create({
+    await User.create({
       firstname,
       lastname,
       email,
@@ -58,13 +58,14 @@ export const signIn = catchAsync(
     const token = jwt.sign({ id: user._id }, process.env.TOKEN as string, {
       expiresIn: "5d",
     });
-   console.log(token)
+    console.log(token)
     res
       .cookie("access_token", token, {
         httpOnly: true,
-        maxAge: 5 * 24 * 60 * 60 * 1000, 
-        
-       
+        secure: true,
+        sameSite: 'none'
+
+
       })
       .status(200)
       .json({ status: 'success', message: "Login successfully", data: user.profilePhoto });
@@ -93,8 +94,10 @@ export const googleAuth = catchAsync(
       res
         .cookie("access_token", token, {
           httpOnly: true,
-          maxAge: 5 * 24 * 60 * 60 * 1000,
-          
+          secure: true,
+          sameSite: 'none'
+
+
         })
         .status(200)
         .json({ status: 'success', message: "Login successfully" });
@@ -118,11 +121,12 @@ export const googleAuth = catchAsync(
       res
         .cookie("access_token", token, {
           httpOnly: true,
-          maxAge: 5 * 24 * 60 * 60 * 1000,
-          
+          secure: true,
+          sameSite: 'none'
+
         })
         .status(200)
-        .json({ status: 'success', message: "Account created and login successfully",data:user.profilePhoto});
+        .json({ status: 'success', message: "Account created and login successfully", data: user.profilePhoto });
     }
   }
 );
@@ -164,7 +168,7 @@ export const getTasks = catchAsync(async (req: Request, res: Response, next: Nex
     });
   }
 
-  const query: { [key: string]:any } = search ? { title: { $regex: search, $options: 'i' } } : {};
+  const query: { [key: string]: any } = search ? { title: { $regex: search, $options: 'i' } } : {};
 
 
   let sortOption = { createdAt: -1 }.toString()

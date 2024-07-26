@@ -31,7 +31,7 @@ exports.signUp = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
     }
     const salt = yield bcrypt_1.default.genSalt(10);
     const hashedPassword = yield bcrypt_1.default.hash(password, salt);
-    const newUser = yield userModel_1.User.create({
+    yield userModel_1.User.create({
         firstname,
         lastname,
         email,
@@ -62,7 +62,8 @@ exports.signIn = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
     res
         .cookie("access_token", token, {
         httpOnly: true,
-        maxAge: 5 * 24 * 60 * 60 * 1000,
+        secure: true,
+        sameSite: 'none'
     })
         .status(200)
         .json({ status: 'success', message: "Login successfully", data: user.profilePhoto });
@@ -82,7 +83,8 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
         res
             .cookie("access_token", token, {
             httpOnly: true,
-            maxAge: 5 * 24 * 60 * 60 * 1000,
+            secure: true,
+            sameSite: 'none'
         })
             .status(200)
             .json({ status: 'success', message: "Login successfully" });
@@ -104,7 +106,8 @@ exports.googleAuth = (0, catchAsync_1.default)((req, res, next) => __awaiter(voi
         res
             .cookie("access_token", token, {
             httpOnly: true,
-            maxAge: 5 * 24 * 60 * 60 * 1000,
+            secure: true,
+            sameSite: 'none'
         })
             .status(200)
             .json({ status: 'success', message: "Account created and login successfully", data: user.profilePhoto });
